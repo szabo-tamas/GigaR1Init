@@ -55,7 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
