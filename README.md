@@ -9,7 +9,12 @@ Clone the repo to your hard drive. Open it as a workspace, and open the _Source_
 In the _Documents_ directory you can find some useful information about the board, and the current pinout.
 
 ## Status
-No code generated.
+uC is up and running. The external SDRAM is tested at the beginning of the software.
 
 ## Known issues
-None.
+- The SDMMC interface is connected to the WiFi module, so the MX_SDMMC1_SD_Init function is not called (this will generate a warning). This has currently no priority.
+
+## ToDo
+- Set up the QSPI and the external Flash. Add some FS support.
+- Add an RTOS
+- Test LTDC

@@ -50,6 +50,7 @@ MEMORY
   RAM_D2 (xrw)   : ORIGIN = 0x30000000, LENGTH = 288K
   RAM_D3 (xrw)   : ORIGIN = 0x38000000, LENGTH = 64K
   ITCMRAM (xrw)  : ORIGIN = 0x00000000, LENGTH = 64K
+  SDRAM (xrw)    : ORIGIN = 0xC0000000, LENGTH = 8M
 }
 
 /* Sections */
@@ -176,6 +177,35 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
+  /* External SDRAM sections. Note that the BANKs here are representing the BANKs in the SDRAM IC, not the BANKs of the FMC controller. */
+  .SDRAM_BANK0 0xC0000000 (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.SDRAM_BANK0);
+    . = ALIGN(4);
+  } > SDRAM
+  
+  .SDRAM_BANK1 0xC0200000 (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.SDRAM_BANK1);
+    . = ALIGN(4);
+  } > SDRAM
+  
+  .SDRAM_BANK2 0xC0400000 (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.SDRAM_BANK2);
+    . = ALIGN(4);
+  } > SDRAM
+  
+  .SDRAM_BANK3 0xC0600000 (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.SDRAM_BANK3);
+    . = ALIGN(4);
+  } > SDRAM
+  
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {

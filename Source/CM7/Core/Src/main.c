@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "sdram.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -207,6 +207,32 @@ Error_Handler();
   MX_DSIHOST_DSI_Init();
   /* USER CODE BEGIN 2 */
 
+    /*  Indicate that the SDRAM test is running  */
+    HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+    HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
+
+
+    /*  Run the SDRAM test. If NOK, flash the red LED.  */
+    if( ucSDRAM_Test() != SDRAM_OK )
+    {
+        /*  Turn off all LEDs  */
+        HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+        HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
+        HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
+
+        while(1)
+        {
+            HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_RESET);
+            HAL_Delay( 500 );
+            HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+            HAL_Delay( 500 );
+        }
+    }
+    /*  Turn off the LEDs  */
+        HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+        HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
+        HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -216,6 +242,18 @@ Error_Handler();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_RESET);
+      HAL_Delay(250);
+      HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_RESET);
+      HAL_Delay(250);
+      HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_RESET);
+      HAL_Delay(250);
+      HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+      HAL_Delay(250);
+      HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
+      HAL_Delay(250);
+      HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
+      HAL_Delay(250);
   }
   /* USER CODE END 3 */
 }
@@ -1507,7 +1545,7 @@ void MX_FMC_Init(void)
   FMC_SDRAM_TimingTypeDef SdramTiming = {0};
 
   /* USER CODE BEGIN FMC_Init 1 */
-
+  FMC_SDRAM_CommandTypeDef command;
   /* USER CODE END FMC_Init 1 */
 
   /** Perform the SDRAM1 memory initialization sequence
@@ -1539,7 +1577,8 @@ void MX_FMC_Init(void)
   }
 
   /* USER CODE BEGIN FMC_Init 2 */
-
+    /*  Initialize the SDRAM  */
+  vSDRAM_Init(&hsdram1, &command);
   /* USER CODE END FMC_Init 2 */
 }
 
@@ -1571,16 +1610,19 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, D7_Pin|WIFI_ON_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port, RGB_BLUE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port, RGB_BLUE_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, BLE_ON_Pin|D3_Pin|D5_Pin|D2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOJ, RGB_GREEN_Pin|D4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port, RGB_GREEN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RGB_RED_GPIO_Port, RGB_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RGB_RED_GPIO_Port, RGB_RED_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(D4_GPIO_Port, D4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(D6_GPIO_Port, D6_Pin, GPIO_PIN_RESET);
