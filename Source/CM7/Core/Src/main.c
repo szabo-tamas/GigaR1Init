@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -54,7 +55,6 @@ DSI_HandleTypeDef hdsi;
 
 FDCAN_HandleTypeDef hfdcan2;
 
-I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c4;
 
@@ -81,6 +81,13 @@ HCD_HandleTypeDef hhcd_USB_OTG_HS;
 MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 SDRAM_HandleTypeDef hsdram1;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -90,7 +97,6 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_MDMA_Init(void);
-static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_I2C4_Init(void);
 static void MX_QUADSPI_Init(void);
@@ -113,6 +119,8 @@ static void MX_SAI1_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_DSIHOST_DSI_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -134,6 +142,12 @@ int main(void)
 /* USER CODE BEGIN Boot_Mode_Sequence_0 */
   int32_t timeout;
 /* USER CODE END Boot_Mode_Sequence_0 */
+
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
 
 /* USER CODE BEGIN Boot_Mode_Sequence_1 */
   /* Wait until CPU2 boots and enters in stop mode or timeout*/
@@ -183,7 +197,6 @@ Error_Handler();
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_MDMA_Init();
-  MX_I2C1_Init();
   MX_I2C2_Init();
   MX_I2C4_Init();
   MX_QUADSPI_Init();
@@ -210,7 +223,6 @@ Error_Handler();
     /*  Indicate that the SDRAM test is running  */
     HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
     HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
 
 
     /*  Run the SDRAM test. If NOK, flash the red LED.  */
@@ -219,7 +231,6 @@ Error_Handler();
         /*  Turn off all LEDs  */
         HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
         HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
-        HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
 
         while(1)
         {
@@ -232,9 +243,42 @@ Error_Handler();
     /*  Turn off the LEDs  */
         HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
         HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
-        HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -242,18 +286,6 @@ Error_Handler();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_RESET);
-      HAL_Delay(250);
-      HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_RESET);
-      HAL_Delay(250);
-      HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_RESET);
-      HAL_Delay(250);
-      HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
-      HAL_Delay(250);
-      HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
-      HAL_Delay(250);
-      HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port,   RGB_BLUE_Pin,   GPIO_PIN_SET);
-      HAL_Delay(250);
   }
   /* USER CODE END 3 */
 }
@@ -741,54 +773,6 @@ static void MX_FDCAN2_Init(void)
   /* USER CODE BEGIN FDCAN2_Init 2 */
 
   /* USER CODE END FDCAN2_Init 2 */
-
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x307075B1;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -1610,9 +1594,6 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, D7_Pin|WIFI_ON_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RGB_BLUE_GPIO_Port, RGB_BLUE_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, BLE_ON_Pin|D3_Pin|D5_Pin|D2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -1636,13 +1617,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : RGB_BLUE_Pin */
-  GPIO_InitStruct.Pin = RGB_BLUE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RGB_BLUE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BLE_ON_Pin D3_Pin D5_Pin D2_Pin */
   GPIO_InitStruct.Pin = BLE_ON_Pin|D3_Pin|D5_Pin|D2_Pin;
@@ -1710,6 +1684,52 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_RESET);
+    osDelay(250);
+    HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_RESET);
+    osDelay(250);
+    HAL_GPIO_WritePin(RGB_RED_GPIO_Port,    RGB_RED_Pin,    GPIO_PIN_SET);
+    osDelay(250);
+    HAL_GPIO_WritePin(RGB_GREEN_GPIO_Port,  RGB_GREEN_Pin,  GPIO_PIN_SET);
+    osDelay(250);
+  }
+  /* USER CODE END 5 */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM17 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM17) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

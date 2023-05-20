@@ -59,8 +59,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define D7_Pin GPIO_PIN_4
 #define D7_GPIO_Port GPIOB
-#define RGB_BLUE_Pin GPIO_PIN_3
-#define RGB_BLUE_GPIO_Port GPIOE
 #define BLE_ON_Pin GPIO_PIN_10
 #define BLE_ON_GPIO_Port GPIOA
 #define BOOT_IN_Pin GPIO_PIN_13
