@@ -37,12 +37,12 @@
 		<link>
 			<name>Middlewares</name>
 			<type>2</type>
-			<location>S:/St/GitHub/GigaR1Init/Source/Middlewares</location>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares</locationURI>
 		</link>
 		<link>
 			<name>stm32h7xx_hal_qspi.c</name>
 			<type>1</type>
-			<location>S:/St/GitHub/GigaR1Init/Source/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_qspi.c</location>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_qspi.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32H7xx_HAL_Driver/stm32h7xx_hal.c</name>

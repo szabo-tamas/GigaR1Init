@@ -37,7 +37,7 @@
 		<link>
 			<name>Middlewares</name>
 			<type>2</type>
-			<location>S:/St/GitHub/GigaR1Init/Source/Middlewares</location>
+			<locationURI>PARENT-1-PROJECT_LOC/Middlewares</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32H7xx_HAL_Driver/stm32h7xx_hal.c</name>
